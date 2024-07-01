@@ -55,9 +55,11 @@ export type ExifType = {
 
 export type ImageType = {
   id: number;
+  title: string;
   url: string;
   preview_url: string;
   exif: ExifType;
+  labels: any;
   width: number;
   height: number;
   lon: string;
@@ -68,6 +70,19 @@ export type ImageType = {
   sort: number;
   tag_names: string;
   tag_values: string;
+  copyrights: any[];
+}
+
+export type CopyrightType = {
+  id: number;
+  name: string;
+  social_name: string;
+  type: string;
+  url: string;
+  avatar_url: string;
+  detail: string;
+  default: number;
+  show: number;
 }
 
 export type Config = {

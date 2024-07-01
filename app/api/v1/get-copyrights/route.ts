@@ -1,8 +1,8 @@
 import 'server-only'
-import { fetchAllImages } from '~/server/lib/query'
+import { fetchCopyrightList } from '~/server/lib/query'
 
 export async function GET() {
-  const data = await fetchAllImages();
+  const data = await fetchCopyrightList()
   return Response.json(data)
 }
 

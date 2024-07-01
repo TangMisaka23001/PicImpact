@@ -17,7 +17,8 @@ import {
   ImageUp,
   Milestone,
   Settings,
-  LogOut
+  LogOut,
+  Copyright
 } from 'lucide-react'
 import { loginOut } from '~/server/lib/actions'
 
@@ -95,7 +96,17 @@ export default function VaulDrawer() {
                         className={pathname === '/admin/tag' ? activeClasses : ''}
                       >
                         <Drawer.Close className="w-full text-left">
-                          标签管理
+                          相册管理
+                        </Drawer.Close>
+                      </ListboxItem>
+                      <ListboxItem
+                        key="tag"
+                        startContent={<Copyright size={20} className={iconClasses} />}
+                        onClick={() => router.push('/admin/copyright')}
+                        className={pathname === '/admin/copyright' ? activeClasses : ''}
+                      >
+                        <Drawer.Close className="w-full text-left">
+                          版权管理
                         </Drawer.Close>
                       </ListboxItem>
                       <ListboxItem

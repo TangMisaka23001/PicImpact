@@ -12,9 +12,9 @@ export async function POST(req: NextRequest) {
   }
   try {
     await insertTag(tag);
-    return Response.json({ code: 200, message: '更新成功！' })
+    return Response.json({ code: 200, message: '新增成功！' })
   } catch (e) {
     console.log(e)
-    return Response.json({ code: 500, message: '更新失败！' })
+    return Response.json({ code: 500, message: '新增失败！' })
   }
 }

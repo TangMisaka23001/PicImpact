@@ -12,7 +12,10 @@ export async function PUT(req: NextRequest) {
   const endpoint = query?.find((item: Config) => item.config_key === 'endpoint').config_value
   const bucket = query?.find((item: Config) => item.config_key === 'bucket').config_value
   const storageFolder = query?.find((item: Config) => item.config_key === 'storage_folder').config_value
+  const forcePathStyle = query?.find((item: Config) => item.config_key === 'force_path_style').config_value
+  const s3Cdn = query?.find((item: Config) => item.config_key === 's3_cdn').config_value
+  const s3CdnUrl = query?.find((item: Config) => item.config_key === 's3_cdn_url').config_value
 
-  const data = await updateS3Config({ accesskeyId, accesskeySecret, region, endpoint, bucket, storageFolder });
+  const data = await updateS3Config({ accesskeyId, accesskeySecret, region, endpoint, bucket, storageFolder, forcePathStyle, s3Cdn, s3CdnUrl });
   return Response.json(data)
 }
