@@ -1,11 +1,14 @@
 import { createStore } from 'zustand/vanilla'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import { TagType, ImageType, Config } from '~/types'
+import { TagType, ImageType, Config, CopyrightType } from '~/types'
 
 export type ButtonState = {
   tagAdd: boolean
   tagEdit: boolean
   tag: TagType
+  copyrightAdd: boolean
+  copyrightEdit: boolean
+  copyright: CopyrightType
   image: ImageType
   imageEdit: boolean
   imageViewData: ImageType
@@ -18,13 +21,19 @@ export type ButtonState = {
   aListData: Config[]
   MasonryView: boolean
   MasonryViewData: ImageType
+  MasonryViewDataList: ImageType[]
   tagHelp: boolean
+  imageHelp: boolean
+  uploadHelp: boolean
 }
 
 export type ButtonActions = {
   setTagAdd: (tagAdd: boolean) => void
   setTagEdit: (tagEdit: boolean) => void
   setTagEditData: (tag: TagType) => void
+  setCopyrightAdd: (copyrightAdd: boolean) => void
+  setCopyrightEdit: (copyrightEdit: boolean) => void
+  setCopyrightEditData: (copyright: CopyrightType) => void
   setImageEdit: (imageEdit: boolean) => void
   setImageEditData: (image: ImageType) => void
   setImageView: (imageView: boolean) => void
@@ -37,7 +46,10 @@ export type ButtonActions = {
   setAListEditData: (aListData: Config[]) => void
   setMasonryView: (masonryView: boolean) => void
   setMasonryViewData: (masonryViewData: ImageType) => void
+  setMasonryViewDataList: (masonryViewDataList: ImageType[]) => void
   setTagHelp: (tagHelp: boolean) => void
+  setImageHelp: (imageHelp: boolean) => void
+  setUploadHelp: (uploadHelp: boolean) => void
 }
 
 export type ButtonStore = ButtonState & ButtonActions
@@ -47,6 +59,9 @@ export const initButtonStore = (): ButtonState => {
     tagAdd: false,
     tagEdit: false,
     tag: {} as TagType,
+    copyrightAdd: false,
+    copyrightEdit: false,
+    copyright: {} as CopyrightType,
     imageEdit: false,
     image: {} as ImageType,
     imageView: false,
@@ -59,7 +74,10 @@ export const initButtonStore = (): ButtonState => {
     aListData: [] as Config[],
     MasonryView: false,
     MasonryViewData: {} as ImageType,
+    MasonryViewDataList: [] as ImageType[],
     tagHelp: false,
+    imageHelp: false,
+    uploadHelp: false,
   }
 }
 
@@ -67,6 +85,9 @@ export const defaultInitState: ButtonState = {
   tagAdd: false,
   tagEdit: false,
   tag: {} as TagType,
+  copyrightAdd: false,
+  copyrightEdit: false,
+  copyright: {} as CopyrightType,
   imageEdit: false,
   image: {} as ImageType,
   imageView: false,
@@ -79,7 +100,10 @@ export const defaultInitState: ButtonState = {
   aListData: [] as Config[],
   MasonryView: false,
   MasonryViewData: {} as ImageType,
+  MasonryViewDataList: [] as ImageType[],
   tagHelp: false,
+  imageHelp: false,
+  uploadHelp: false,
 }
 
 export const createButtonStore = (
@@ -97,6 +121,15 @@ export const createButtonStore = (
         })),
         setTagEditData: (tagValue) => set(() => ({
           tag: tagValue,
+        })),
+        setCopyrightAdd: (copyrightAddValue) => set(() => ({
+          copyrightAdd: copyrightAddValue,
+        })),
+        setCopyrightEdit: (copyrightEditValue) => set(() => ({
+          copyrightEdit: copyrightEditValue,
+        })),
+        setCopyrightEditData: (copyrightValue) => set(() => ({
+          copyright: copyrightValue,
         })),
         setImageEdit: (imageEditValue) => set(() => ({
           imageEdit: imageEditValue,
@@ -134,8 +167,17 @@ export const createButtonStore = (
         setMasonryViewData: (masonryViewDataValue) => set(() => ({
           MasonryViewData: masonryViewDataValue,
         })),
+        setMasonryViewDataList: (masonryViewDataListValue) => set(() => ({
+          MasonryViewDataList: masonryViewDataListValue,
+        })),
         setTagHelp: (tagHelpValue) => set(() => ({
           tagHelp: tagHelpValue,
+        })),
+        setImageHelp: (imageHelpValue) => set(() => ({
+          imageHelp: imageHelpValue,
+        })),
+        setUploadHelp: (uploadHelpValue) => set(() => ({
+          uploadHelp: uploadHelpValue,
         })),
       }),
       {

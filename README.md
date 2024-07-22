@@ -12,22 +12,41 @@ PicImpact
     <img src=picimpact.png width=384 />
 </p>
 
+PicImpact 是一个摄影师专用的摄影作品展示网站，基于 Next.js 开发。
+
+### 功能特性
+
+- 瀑布流相册展示图片，支持常见的格式。
+- 点击图片查看原图，浏览图片信息和 EXIF 信息，支持直链访问。
+- 响应式设计，在 PC 和移动端都有不错的体验，支持暗黑模式。
+- 图片存储兼容 S3 API、Cloudflare R2、AList API。
+- 图片支持绑定标签，并且可通过标签进行交互，筛选标签下所有图片。
+- 支持批量自动化上传，上传图片时会生成 0.3 倍率的压缩图片，以提供加载优化。
+- 图片版权信息展示和维护功能，支持外链跳转。
+- 后台有图片数据统计、图片上传、图片维护、相册管理、系统设置和存储配置功能。
+- 基于 SSR 的混合渲染，采用状态机制，提供良好的使用体验。
+- 基于 prisma 的自动初始化数据库和数据迁移，简化部署流程。
+- 支持 Vercel 部署、Node.js 部署、Docker 等容器化部署，当然 k8s 也支持。
+
 ### 如何部署
 
-你可以点击下面的按钮来一键部署到 Vercel，然后将 `Build Command` 为 `pnpm run build:vercel`，也可以 Fork 项目后手动部署到任何支持的平台。
+你可以点击下面的按钮来一键部署到 Vercel，然后将 `Build Command` 设置为 `pnpm run build:vercel`，也可以 Fork 项目后手动部署到任何支持的平台。
 
 <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbesscroft%2FPicImpact&env=DATABASE_URL,AUTH_SECRET"><img src="https://vercel.com/button" alt="Deploy with Vercel"/></a>
 
-| Key          | 备注                                                                                        |
-|--------------|-------------------------------------------------------------------------------------------|
+| Key          | 备注                                                                                       |
+|--------------|------------------------------------------------------------------------------------------|
 | DATABASE_URL | Postgre 数据库 url，如：postgres://账号:密码@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres |
-| AUTH_SECRET  | 权限机密，你可以执行 npx auth secret 生成一个，反正是随机的字符串就行                                               |
+| AUTH_SECRET  | 权限机密，你可以执行 npx auth secret 生成一个，反正是随机的字符串就行                                              |
 
 默认账号：`admin@qq.com`，默认密码：`666666`，**登录后请先去设置里面修改密码！**
 
 > 部署就是这么简单，只需要您准备一个干净的数据库就行！
-> 
-> 不过，不支持 ALL Edge 运行时，毕竟 Vercel 就只给了 Edge 100M 内存，太小了...当然，Node.js 运行时是完美支持的~
+> 除了容器化部署方式外，其它的部署方式都需要执行 `pnpm run prisma:deploy` 来完成 prisma 迁移。
+>
+> 如果是 Vercel 部署，直接将 `Build Command` 设置为 `pnpm run build:vercel` 即可。
+>
+> 如果您自行使用 node 部署，请使用 `pnpm run build:node` 命令来构建。
 
 ### 容器化部署
 
@@ -41,19 +60,6 @@ docker run -d --name picimpact \
   besscroft/picimpact:latest
 ```
 
-```yaml
-version: '3'
-services:
-  picimpact:
-    image: besscroft/picimpact:latest
-    container_name: picimpact
-    ports:
-      - 3000:3000
-    environment:
-      - DATABASE_URL="postgres://账号:密码@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
-      - AUTH_SECRET="自己运行npx auth secret或一串随机的字符串都行"
-```
-
 > 注意：如果您使用 `Docker Compose`，存在无法访问数据库的问题，请尝试将环境变量的双引号去掉。即 `DATABASE_URL="连接信息"` -> `DATABASE_URL=连接信息`。
 
 ### 存储配置
@@ -64,14 +70,17 @@ services:
 
 - AWS S3 配置
 
-| Key              | 备注                                                           |
-|------------------|--------------------------------------------------------------|
-| accesskey_id     | 阿里 OSS / AWS S3 AccessKey_ID                                 |
-| accesskey_secret | 阿里 OSS / AWS S3 AccessKey_Secret                             |
-| region           | 阿里 OSS / AWS S3 Region 地域，如：oss-cn-hongkong                  |
-| endpoint         | 阿里 OSS / AWS S3 Endpoint 地域节点，如：oss-cn-hongkong.aliyuncs.com |
-| bucket           | 阿里 OSS / AWS S3 Bucket 存储桶名称，如：picimpact                     |
-| storage_folder   | 存储文件夹(S3)，严格格式，如：picimpact 或 picimpact/images ，填 / 或者不填表示根路径 |
+| Key              | 备注                                                               |
+|------------------|------------------------------------------------------------------|
+| accesskey_id     | 阿里 OSS / AWS S3 AccessKey_ID                                     |
+| accesskey_secret | 阿里 OSS / AWS S3 AccessKey_Secret                                 |
+| region           | 阿里 OSS / AWS S3 Region 地域，如：`oss-cn-hongkong`                    |
+| endpoint         | 阿里 OSS / AWS S3 Endpoint 地域节点，如：`oss-cn-hongkong.aliyuncs.com`   |
+| bucket           | 阿里 OSS / AWS S3 Bucket 存储桶名称，如：`picimpact`                       |
+| storage_folder   | 存储文件夹(S3)，严格格式，如：`picimpact` 或 `picimpact/images` ，填 `/` 或者不填表示根路径 |
+| force_path_style   | 是否强制客户端对桶使用路径式寻址，默认 `false`，如您使用 minio 作为 s3 存储，需要设置为 `true`     |
+| s3_cdn   | 是否启用 S3 CDN 模式，路径将返回 cdn 地址，默认 false。                            |
+| s3_cdn_url   | cdn 地址，如：`https://cdn.example.com`                               |
 
 - Cloudflare R2 配置
 
@@ -79,17 +88,17 @@ services:
 |---------------------|--------------------------------------------------------------------------|
 | r2_accesskey_id     | Cloudflare AccessKey_ID                                                  |
 | r2_accesskey_secret | Cloudflare AccessKey_Secret                                              |
-| r2_endpoint         | Cloudflare Endpoint 地域节点，如：https://<ACCOUNT_ID>.r2.cloudflarestorage.com |
-| r2_bucket           | Cloudflare Bucket 存储桶名称，如：picimpact                                      |
-| r2_storage_folder   | 存储文件夹(Cloudflare R2)，严格格式，如：picimpact 或 picimpact/images ，填 / 或者不填表示根路径  |
+| r2_endpoint         | Cloudflare Endpoint 地域节点，如：`https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
+| r2_bucket           | Cloudflare Bucket 存储桶名称，如：`picimpact`                                      |
+| r2_storage_folder   | 存储文件夹(Cloudflare R2)，严格格式，如：`picimpact` 或 `picimpact/images` ，填 `/` 或者不填表示根路径  |
 | r2_public_domain    | Cloudflare R2 自定义域（公开访问）                                                 |
 
 - AList API 配置
 
-| Key         | 备注                                     |
-|-------------|----------------------------------------|
-| alist_token | alist 令牌                               |
-| alist_url   | AList 地址，如：https://alist.besscroft.com |
+| Key         | 备注                                   |
+|-------------|--------------------------------------|
+| alist_token | alist 令牌                             |
+| alist_url   | AList 地址，如：https://alist.example.com |
 
 ### 本地开发
 

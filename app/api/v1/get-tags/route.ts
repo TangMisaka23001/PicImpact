@@ -1,8 +1,8 @@
 import 'server-only'
-import { fetchTagsList } from '~/server/lib/query'
+import { fetchTagsListAndNotDefault } from '~/server/lib/query'
 
 export async function GET() {
-  const data = await fetchTagsList();
+  const data = await fetchTagsListAndNotDefault();
   return Response.json(data)
 }
 

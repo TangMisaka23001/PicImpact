@@ -60,9 +60,9 @@ export default function TagEditSheet(props : Readonly<HandleProps>) {
       }}
       modal={false}
     >
-      <SheetContent side="left">
+      <SheetContent side="left" onInteractOutside={(event: any) => event.preventDefault()}>
         <SheetHeader>
-          <SheetTitle>编辑标签</SheetTitle>
+          <SheetTitle>编辑相册</SheetTitle>
           <SheetDescription className="space-y-2">
             <Input
               isRequired
@@ -71,8 +71,8 @@ export default function TagEditSheet(props : Readonly<HandleProps>) {
               isClearable
               type="text"
               variant="bordered"
-              label="标签名称"
-              placeholder="输入标签名称"
+              label="相册名称"
+              placeholder="输入相册名称"
             />
             <Input
               isRequired

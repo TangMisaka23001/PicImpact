@@ -1,6 +1,8 @@
 'use server'
 
 import { db } from '~/server/lib/db'
+import Copyright from "~/app/admin/copyright/page";
+import {ImageType} from "~/types";
 
 export async function fetchS3Info() {
   const findConfig = await db.configs.findMany({
@@ -12,7 +14,10 @@ export async function fetchS3Info() {
           'region',
           'endpoint',
           'bucket',
-          'storage_folder'
+          'storage_folder',
+          'force_path_style',
+          's3_cdn',
+          's3_cdn_url'
         ]
       }
     },
@@ -97,6 +102,27 @@ export async function fetchTagsList() {
   return findAll;
 }
 
+export async function fetchTagsListAndNotDefault() {
+  const findAll = await db.tags.findMany({
+    where: {
+      del: 0
+    },
+    orderBy: [
+      {
+        sort: 'desc',
+      },
+      {
+        create_time: 'desc',
+      },
+      {
+        update_time: 'desc'
+      }
+    ]
+  })
+
+  return findAll;
+}
+
 export async function fetchServerImagesListByTag(pageNum: number, tag: string) {
   if (tag === 'all') {
     tag = ''
@@ -109,7 +135,7 @@ export async function fetchServerImagesListByTag(pageNum: number, tag: string) {
       SELECT 
           image.*,
           STRING_AGG(tags."name", ',') AS tag_names,
-          STRING_AGG(tags.tag_value, ',') AS tag_values
+          STRING_AGG(tags.id::text, ',') AS tag_values
       FROM 
           "public"."Images" AS image
       INNER JOIN "public"."ImageTagRelation" AS relation
@@ -132,7 +158,21 @@ export async function fetchServerImagesListByTag(pageNum: number, tag: string) {
     SELECT 
         image.*,
         STRING_AGG(tags."name", ',') AS tag_names,
-        STRING_AGG(tags.tag_value, ',') AS tag_values
+        STRING_AGG(tags.id::text, ',') AS tag_values,
+        (
+            SELECT json_agg(row_to_json(t))
+            FROM (
+                SELECT copyright.id
+                FROM "public"."Copyright" AS copyright
+                INNER JOIN "public"."ImageCopyrightRelation" AS icrelation
+                    ON copyright.id = icrelation."copyrightId"
+                INNER JOIN "public"."Images" AS image_child
+                    ON icrelation."imageId" = image_child."id"
+            WHERE copyright.del = 0
+            AND image_child.del = 0
+            AND image.id = image_child.id
+            ) t
+        ) AS copyrights
     FROM 
         "public"."Images" AS image
     INNER JOIN "public"."ImageTagRelation" AS relation
@@ -147,6 +187,14 @@ export async function fetchServerImagesListByTag(pageNum: number, tag: string) {
     ORDER BY image.sort DESC, image.create_time DESC, image.update_time DESC 
     LIMIT 8 OFFSET ${(pageNum - 1) * 8}
   `
+  if (findAll) {
+    // @ts-ignore
+    findAll?.map((item: any) => {
+      if (item.copyrights) {
+        item.copyrights = item?.copyrights.map((item: any) => Number(item.id))
+      }
+    })
+  }
   return findAll;
 }
 
@@ -206,7 +254,34 @@ export async function fetchClientImagesListByTag(pageNum: number, tag: string) {
     SELECT 
         image.*,
         STRING_AGG(tags."name", ',') AS tag_names,
-        STRING_AGG(tags.tag_value, ',') AS tag_values
+        STRING_AGG(tags.tag_value, ',') AS tag_values,
+        (
+            SELECT json_agg(row_to_json(t))
+            FROM (
+                SELECT copyright.*
+                FROM "public"."Copyright" AS copyright
+                INNER JOIN "public"."ImageCopyrightRelation" AS icrelation
+                    ON copyright.id = icrelation."copyrightId"
+                INNER JOIN "public"."Images" AS image_child
+                    ON icrelation."imageId" = image_child."id"
+                WHERE copyright.del = 0
+                AND image_child.del = 0
+                AND copyright.show = 0
+                AND copyright.default = 1
+                AND image.id = image_child.id
+                UNION
+                SELECT copyright.*
+                FROM "public"."Copyright" AS copyright
+                INNER JOIN "public"."ImageCopyrightRelation" AS icrelation
+                    ON copyright.id = icrelation."copyrightId"
+                INNER JOIN "public"."Images" AS image_child
+                    ON icrelation."imageId" = image_child."id"
+                WHERE copyright.del = 0
+                AND image_child.del = 0
+                AND copyright.show = 0
+                AND copyright.default = 0
+            ) t
+        ) AS copyrights
     FROM 
         "public"."Images" AS image
     INNER JOIN "public"."ImageTagRelation" AS relation
@@ -253,6 +328,81 @@ export async function fetchClientImagesPageTotalByTag(tag: string) {
             tags.show = 0
         AND
             tags.tag_value = ${tag}
+    ) AS unique_images;
+  `
+  // @ts-ignore
+  return Number(pageTotal[0].total) > 0 ? Math.ceil(Number(pageTotal[0].total) / 16) : 0
+}
+
+export async function fetchClientImagesListByLabel(pageNum: number, label: string) {
+  if (pageNum < 1) {
+    pageNum = 1
+  }
+  const findAll = await db.$queryRaw`
+    SELECT 
+        image.*,
+        STRING_AGG(tags."name", ',') AS tag_names,
+        STRING_AGG(tags.tag_value, ',') AS tag_values,
+        (
+            SELECT json_agg(row_to_json(t))
+            FROM (
+                SELECT copyright.*
+                FROM "public"."Copyright" AS copyright
+                INNER JOIN "public"."ImageCopyrightRelation" AS icrelation
+                    ON copyright.id = icrelation."copyrightId"
+                INNER JOIN "public"."Images" AS image_child
+                    ON icrelation."imageId" = image_child."id"
+                WHERE copyright.del = 0
+                AND image_child.del = 0
+                AND copyright.show = 0
+                AND image.id = image_child.id
+            ) t
+        ) AS copyrights
+    FROM 
+        "public"."Images" AS image
+    INNER JOIN "public"."ImageTagRelation" AS relation
+        ON image.id = relation."imageId"
+    INNER JOIN "public"."Tags" AS tags
+        ON relation.tag_value = tags.tag_value
+    WHERE
+        image.del = 0
+    AND
+        tags.del = 0
+    AND
+        image.show = 0
+    AND
+        tags.show = 0
+    AND
+        image.labels::jsonb @> ${JSON.stringify([label])}::jsonb
+    GROUP BY image.id
+    ORDER BY image.sort DESC, image.create_time DESC, image.update_time DESC
+    LIMIT 16 OFFSET ${(pageNum - 1) * 16}
+  `
+  return findAll;
+}
+
+export async function fetchClientImagesPageTotalByLabel(label: string) {
+  const pageTotal = await db.$queryRaw`
+    SELECT COALESCE(COUNT(1),0) AS total
+    FROM (
+        SELECT DISTINCT ON (image.id)
+           image.id
+        FROM
+           "public"."Images" AS image
+        INNER JOIN "public"."ImageTagRelation" AS relation
+            ON image.id = relation."imageId"
+        INNER JOIN "public"."Tags" AS tags
+            ON relation.tag_value = tags.tag_value
+        WHERE
+            image.del = 0
+        AND
+            tags.del = 0
+        AND
+            image.show = 0
+        AND
+            tags.show = 0
+        AND
+            image.labels::jsonb @> ${JSON.stringify([label])}::jsonb
     ) AS unique_images;
   `
   // @ts-ignore
@@ -319,29 +469,6 @@ export async function fetchImagesAnalysis() {
   }
 }
 
-export async function fetchAllImages() {
-  const findAll = await db.$queryRaw`
-    SELECT 
-        image.*,
-        STRING_AGG(tags."name", ',') AS tag_names,
-        STRING_AGG(tags.tag_value, ',') AS tag_values
-    FROM 
-        "public"."Images" AS image
-    INNER JOIN "public"."ImageTagRelation" AS relation
-        ON image.id = relation."imageId"
-    INNER JOIN "public"."Tags" AS tags
-        ON relation.tag_value = tags.tag_value
-    WHERE 
-        image.del = 0
-    AND
-        tags.del = 0
-    GROUP BY image.id
-    ORDER BY image.sort DESC, image.create_time DESC, image.update_time DESC 
-  `
-
-  return findAll
-}
-
 export async function fetchUserById(userId: string) {
   const findUser = await db.user.findUnique({
     where: {
@@ -379,4 +506,47 @@ export async function fetchCustomTitle() {
   })
 
   return find
+}
+
+export async function fetchCopyrightList() {
+  const findAll = await db.copyright.findMany({
+    where: {
+      del: 0,
+    },
+    orderBy: [
+      {
+        create_time: 'desc',
+      },
+      {
+        update_time: 'desc'
+      }
+    ]
+  })
+
+  return findAll;
+}
+
+export async function fetchImageByIdAndAuth(id: number) {
+  const findAll = await db.$queryRaw`
+    SELECT
+        "Images".*
+    FROM
+        "Images"
+    INNER JOIN "ImageTagRelation"
+        ON "Images"."id" = "ImageTagRelation"."imageId"
+    INNER JOIN "Tags"
+        ON "ImageTagRelation".tag_value = "Tags".tag_value
+    WHERE
+        "Images".del = 0
+    AND
+        "Tags".del = 0
+    AND
+        "Images".show = 0
+    AND
+        "Tags".show = 0
+    AND
+        "Images".id = ${id}
+  `
+
+  return findAll;
 }
