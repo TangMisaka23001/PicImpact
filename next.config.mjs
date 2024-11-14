@@ -1,10 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-  experimental: {
-    serverComponentsExternalPackages: ['pg'],
-    instrumentationHook: true,
+  reactStrictMode: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
   },
+  serverExternalPackages: ['pg'],
   eslint: {
     ignoreDuringBuilds: true,
   },

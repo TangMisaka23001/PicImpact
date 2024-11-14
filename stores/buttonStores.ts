@@ -1,11 +1,11 @@
 import { createStore } from 'zustand/vanilla'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import { TagType, ImageType, Config, CopyrightType } from '~/types'
+import { AlbumType, ImageType, Config, CopyrightType } from '~/types'
 
 export type ButtonState = {
-  tagAdd: boolean
-  tagEdit: boolean
-  tag: TagType
+  albumAdd: boolean
+  albumEdit: boolean
+  album: AlbumType
   copyrightAdd: boolean
   copyrightEdit: boolean
   copyright: CopyrightType
@@ -22,15 +22,17 @@ export type ButtonState = {
   MasonryView: boolean
   MasonryViewData: ImageType
   MasonryViewDataList: ImageType[]
-  tagHelp: boolean
+  albumHelp: boolean
   imageHelp: boolean
   uploadHelp: boolean
+  imageBatchDelete: boolean
+  searchOpen: boolean
 }
 
 export type ButtonActions = {
-  setTagAdd: (tagAdd: boolean) => void
-  setTagEdit: (tagEdit: boolean) => void
-  setTagEditData: (tag: TagType) => void
+  setAlbumAdd: (albumAdd: boolean) => void
+  setAlbumEdit: (albumEdit: boolean) => void
+  setAlbumEditData: (album: AlbumType) => void
   setCopyrightAdd: (copyrightAdd: boolean) => void
   setCopyrightEdit: (copyrightEdit: boolean) => void
   setCopyrightEditData: (copyright: CopyrightType) => void
@@ -47,18 +49,20 @@ export type ButtonActions = {
   setMasonryView: (masonryView: boolean) => void
   setMasonryViewData: (masonryViewData: ImageType) => void
   setMasonryViewDataList: (masonryViewDataList: ImageType[]) => void
-  setTagHelp: (tagHelp: boolean) => void
+  setAlbumHelp: (albumHelp: boolean) => void
   setImageHelp: (imageHelp: boolean) => void
   setUploadHelp: (uploadHelp: boolean) => void
+  setImageBatchDelete: (imageBatchDelete: boolean) => void
+  setSearchOpen: (searchOpen: boolean) => void
 }
 
 export type ButtonStore = ButtonState & ButtonActions
 
 export const initButtonStore = (): ButtonState => {
   return {
-    tagAdd: false,
-    tagEdit: false,
-    tag: {} as TagType,
+    albumAdd: false,
+    albumEdit: false,
+    album: {} as AlbumType,
     copyrightAdd: false,
     copyrightEdit: false,
     copyright: {} as CopyrightType,
@@ -75,16 +79,18 @@ export const initButtonStore = (): ButtonState => {
     MasonryView: false,
     MasonryViewData: {} as ImageType,
     MasonryViewDataList: [] as ImageType[],
-    tagHelp: false,
+    albumHelp: false,
     imageHelp: false,
     uploadHelp: false,
+    imageBatchDelete: false,
+    searchOpen: false,
   }
 }
 
 export const defaultInitState: ButtonState = {
-  tagAdd: false,
-  tagEdit: false,
-  tag: {} as TagType,
+  albumAdd: false,
+  albumEdit: false,
+  album: {} as AlbumType,
   copyrightAdd: false,
   copyrightEdit: false,
   copyright: {} as CopyrightType,
@@ -101,9 +107,11 @@ export const defaultInitState: ButtonState = {
   MasonryView: false,
   MasonryViewData: {} as ImageType,
   MasonryViewDataList: [] as ImageType[],
-  tagHelp: false,
+  albumHelp: false,
   imageHelp: false,
   uploadHelp: false,
+  imageBatchDelete: false,
+  searchOpen: false,
 }
 
 export const createButtonStore = (
@@ -113,14 +121,14 @@ export const createButtonStore = (
     persist(
       (set, get) => ({
         ...initState,
-        setTagAdd: (tagAddValue) => set(() => ({
-          tagAdd: tagAddValue,
+        setAlbumAdd: (albumAddValue) => set(() => ({
+          albumAdd: albumAddValue,
         })),
-        setTagEdit: (tagEditValue) => set(() => ({
-          tagEdit: tagEditValue,
+        setAlbumEdit: (albumEditValue) => set(() => ({
+          albumEdit: albumEditValue,
         })),
-        setTagEditData: (tagValue) => set(() => ({
-          tag: tagValue,
+        setAlbumEditData: (albumValue) => set(() => ({
+          album: albumValue,
         })),
         setCopyrightAdd: (copyrightAddValue) => set(() => ({
           copyrightAdd: copyrightAddValue,
@@ -170,14 +178,20 @@ export const createButtonStore = (
         setMasonryViewDataList: (masonryViewDataListValue) => set(() => ({
           MasonryViewDataList: masonryViewDataListValue,
         })),
-        setTagHelp: (tagHelpValue) => set(() => ({
-          tagHelp: tagHelpValue,
+        setAlbumHelp: (albumHelpValue) => set(() => ({
+          albumHelp: albumHelpValue,
         })),
         setImageHelp: (imageHelpValue) => set(() => ({
           imageHelp: imageHelpValue,
         })),
         setUploadHelp: (uploadHelpValue) => set(() => ({
           uploadHelp: uploadHelpValue,
+        })),
+        setImageBatchDelete: (imageBatchDeleteValue) => set(() => ({
+          imageBatchDelete: imageBatchDeleteValue,
+        })),
+        setSearchOpen: (searchOpenValue) => set(() => ({
+          searchOpen: searchOpenValue,
         })),
       }),
       {
